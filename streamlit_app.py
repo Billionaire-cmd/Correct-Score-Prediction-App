@@ -8,7 +8,7 @@ from sklearn.metrics import accuracy_score
 from math import factorial
 
 # Set up the Streamlit page configuration
-st.set_page_config(page_title="🤖 Rabiotic Advanced Prediction", layout="wide")
+st.set_page_config(page_title="🤖 Rabiotic Advanced Prediction App", layout="wide")
 
 # Application Title
 st.title("🤖 Advanced Rabiotic Football Outcome Predictor")

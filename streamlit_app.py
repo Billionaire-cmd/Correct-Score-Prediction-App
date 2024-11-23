@@ -1,22 +1,18 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+from math import factorial  # Correct import for factorial
 from scipy.stats import poisson
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
 import streamlit as st
 
-# Set up the Streamlit page configuration
-st.set_page_config(page_title="🤖 Rabiotic Advanced Prediction", layout="wide")
-
 # Streamlit Application Title
-st.title("🤖 Rabiotic Advanced Prediction")
+st.title("🤖 Advanced Rabiotic Football Outcome Predictor")
 st.markdown("""
-    Predict football match outcomes using advanced metrics:
-    - **Poisson Distribution**
-    - **Machine Learning**
-    - **Odds Analysis**
-    - **Margin Calculations**
+Predict football match outcomes using advanced metrics like:
+- **Poisson Distribution**
+- **Machine Learning**
+- **Odds Analysis**
+- **Margin Calculations**
 """)
 
 # Sidebar for Input Parameters
@@ -25,115 +21,100 @@ st.sidebar.header("Input Parameters")
 # Match and Odds Input
 home_team = st.sidebar.text_input("Home Team", "Team A")
 away_team = st.sidebar.text_input("Away Team", "Team B")
-home_attack = st.sidebar.slider("Home Attack Strength", 0.5, 3.0, 1.8)
-away_defense = st.sidebar.slider("Away Defense Strength", 0.5, 3.0, 1.3)
-away_attack = st.sidebar.slider("Away Attack Strength", 0.5, 3.0, 1.5)
-home_defense = st.sidebar.slider("Home Defense Strength", 0.5, 3.0, 1.4)
+goals_home_mean = st.sidebar.number_input("Expected Goals (Home)", min_value=0.1, value=1.2, step=0.1)
+goals_away_mean = st.sidebar.number_input("Expected Goals (Away)", min_value=0.1, value=1.1, step=0.1)
 
 # Odds Input
 home_win_odds = st.sidebar.number_input("Odds: Home Win", value=2.50, step=0.01)
 draw_odds = st.sidebar.number_input("Odds: Draw", value=3.20, step=0.01)
 away_win_odds = st.sidebar.number_input("Odds: Away Win", value=3.10, step=0.01)
+over_odds = st.sidebar.number_input("Over 2.5 Odds", value=2.40, step=0.01)
+under_odds = st.sidebar.number_input("Under 2.5 Odds", value=1.55, step=0.01)
 
-# Calculate Poisson Probabilities
-def poisson_prob(mean, goals):
-    return (np.exp(-mean) * mean**goals) / np.math.factorial(goals)
+# Margin Targets
+st.sidebar.subheader("Margin Targets")
+margin_targets = {
+    "Match Results": st.sidebar.number_input("Match Results Margin", value=4.95, step=0.01),
+    "Asian Handicap": st.sidebar.number_input("Asian Handicap Margin", value=5.90, step=0.01),
+    "Over/Under": st.sidebar.number_input("Over/Under Margin", value=6.18, step=0.01),
+    "Exact Goals": st.sidebar.number_input("Exact Goals Margin", value=20.0, step=0.01),
+    "Correct Score": st.sidebar.number_input("Correct Score Margin", value=57.97, step=0.01),
+    "HT/FT": st.sidebar.number_input("HT/FT Margin", value=20.0, step=0.01),
+}
 
-def calculate_probs(home_attack, away_attack, home_defense, away_defense):
-    # Expected goals
-    home_ht_goals = home_attack * away_defense * 0.5
-    away_ht_goals = away_attack * home_defense * 0.5
-    home_ft_goals = home_attack * away_defense
-    away_ft_goals = away_attack * home_defense
+# Select Points for Probabilities and Odds
+selected_points = st.sidebar.multiselect(
+    "Select Points for Probabilities and Odds",
+    options=["Home Win", "Draw", "Away Win", "Over 2.5", "Under 2.5", "Correct Score", "HT/FT", "BTTS", "Exact Goals"]
+)
 
-    # Calculate probabilities for Halftime and Fulltime
-    ht_probs = np.outer(
-        [poisson_prob(home_ht_goals, i) for i in range(3)],
-        [poisson_prob(away_ht_goals, i) for i in range(3)]
-    )
-    ft_probs = np.outer(
-        [poisson_prob(home_ft_goals, i) for i in range(6)],
-        [poisson_prob(away_ft_goals, i) for i in range(6)]
-    )
-    
-    return ht_probs, ft_probs
+# Submit Button
+submit_button = st.sidebar.button("Submit Prediction")
 
-# HT/FT Probability Calculation
-def calculate_ht_ft_probs(ht_probs, ft_probs):
-    ht_ft_probs = {
-        "1/1": np.sum(np.tril(ft_probs, -1)) * 0.6,
-        "1/X": np.sum(np.diag(ft_probs)) * 0.4,
-        "1/2": np.sum(np.triu(ft_probs, 1)) * 0.2,
-        "X/1": np.sum(np.tril(ft_probs, -1)) * 0.4,
-        "X/X": np.sum(np.diag(ft_probs)) * 0.6,
-        "X/2": np.sum(np.triu(ft_probs, 1)) * 0.4,
-    }
-    return ht_ft_probs
+# Functions
+def calculate_margin_difference(odds, margin_target):
+    return round(margin_target - odds, 2)
 
-# Function to calculate margin difference for identifying value bets
-def identify_value_bets(predicted_prob, odds):
-    implied_prob = 1 / odds * 100  # Calculate implied probability
+def poisson_prob(mean, goal):
+    return (np.exp(-mean) * mean**goal) / factorial(goal)  # Using `factorial` from `math`
+
+def calculate_probabilities(home_mean, away_mean, max_goals=5):
+    home_probs = [poisson_prob(home_mean, g) for g in range(max_goals + 1)]
+    away_probs = [poisson_prob(away_mean, g) for g in range(max_goals + 1)]
+    return home_probs, away_probs
+
+# Value Bet Identification based on margin between predicted and bookmaker odds
+def identify_value_bet(predicted_prob, bookmaker_odds, threshold=0.05):
+    implied_prob = 1 / bookmaker_odds * 100  # Convert odds to implied probability
     margin = predicted_prob - implied_prob
-    value_bet = margin > 0  # A bet is considered valuable if the margin is positive
-    return value_bet, margin
+    if margin > threshold * implied_prob:  # If margin exceeds the threshold, it's a value bet
+        return True, margin
+    else:
+        return False, margin
 
-# Function to train the machine learning model
-def train_ml_model(historical_data):
-    X = historical_data[['home_attack', 'away_defense', 'home_defense', 'away_attack']]
-    y = historical_data['outcome']  # Outcome: 1 = Home Win, 0 = Draw, -1 = Away Win
+# Correct Score Prediction (using Poisson probabilities for each scoreline)
+def predict_correct_score(home_probs, away_probs):
+    score_probabilities = {}
+    for home_goals in range(len(home_probs)):
+        for away_goals in range(len(away_probs)):
+            score_probabilities[f"{home_goals}-{away_goals}"] = home_probs[home_goals] * away_probs[away_goals]
+    
+    # Find the most likely correct score
+    best_score = max(score_probabilities, key=score_probabilities.get)
+    best_score_prob = score_probabilities[best_score] * 100  # Convert to percentage
+    return best_score, best_score_prob
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    model = LogisticRegression()
-    model.fit(X_train, y_train)
+# Display Predictions and Value Bets
+if submit_button:
+    # Calculate probabilities
+    home_probs, away_probs = calculate_probabilities(goals_home_mean, goals_away_mean)
 
-    y_pred = model.predict(X_test)
-    accuracy = accuracy_score(y_test, y_pred)
-    return model, accuracy
+    # Display Poisson probabilities for home and away teams
+    st.subheader(f"Poisson Probabilities for Correct Score:")
+    score_probabilities = {}
+    for home_goals in range(len(home_probs)):
+        for away_goals in range(len(away_probs)):
+            score_probabilities[f"{home_goals}-{away_goals}"] = home_probs[home_goals] * away_probs[away_goals]
+            st.write(f"Score {home_goals}-{away_goals}: {score_probabilities[f'{home_goals}-{away_goals}']*100:.2f}%")
 
-# Historical data for training the ML model
-historical_data = {
-    'home_attack': [1.8, 2.0, 1.6],
-    'away_defense': [1.3, 1.4, 1.2],
-    'home_defense': [1.4, 1.3, 1.6],
-    'away_attack': [1.5, 1.7, 1.4],
-    'outcome': [1, 0, -1]  # 1 = Home Win, 0 = Draw, -1 = Away Win
-}
-historical_data = pd.DataFrame(historical_data)
+    # Predict the most likely correct score
+    best_score, best_score_prob = predict_correct_score(home_probs, away_probs)
+    st.subheader(f"Predicted Correct Score: {best_score} (Probability: {best_score_prob:.2f}%)")
 
-# Train the machine learning model
-model, accuracy = train_ml_model(historical_data)
-
-# Display model accuracy
-st.write(f"Model Accuracy: {accuracy * 100:.2f}%")
-
-# Predict match outcome using the trained model
-match_features = np.array([home_attack, away_defense, home_defense, away_attack]).reshape(1, -1)
-predicted_outcome = model.predict(match_features)
-outcome = 'Home Win' if predicted_outcome == 1 else 'Draw' if predicted_outcome == 0 else 'Away Win'
-st.write(f"Predicted Match Outcome: {outcome}")
-
-# Generate HT/FT Probabilities and Identify Value Bets
-ht_probs, ft_probs = calculate_probs(home_attack, away_attack, home_defense, away_defense)
-ht_ft_probs = calculate_ht_ft_probs(ht_probs, ft_probs)
-
-# Display HT/FT Probabilities and Value Bets
-st.markdown("### HT/FT Probabilities and Value Bets")
-bookmaker_odds = {
-    "1/1": home_win_odds,
-    "1/X": draw_odds,
-    "1/2": away_win_odds,
-    "X/1": home_win_odds,
-    "X/X": draw_odds,
-    "X/2": away_win_odds,
-}
-
-for outcome, odds in bookmaker_odds.items():
-    predicted_prob = ht_ft_probs[outcome] * 100  # Convert to percentage
-    is_value_bet, value_margin = identify_value_bets(predicted_prob, odds)
-    st.write(f"{outcome}: {predicted_prob:.2f}% (Bookmaker Odds: {odds})")
-    if is_value_bet:
-        st.write(f"  🔥 **Value Bet!** Margin: {value_margin:.2f}%")
-
-# Custom recommendation based on highest value margin
-best_bet = max(bookmaker_odds.keys(), key=lambda x: ht_ft_probs[x] - 1 / bookmaker_odds[x])
-st.write(f"💡 **Recommended Bet:** {best_bet} (Probability: {ht_ft_probs[best_bet] * 100:.2f}%, Odds: {bookmaker_odds[best_bet]})")
+    # Value Bet Recommendations
+    st.subheader("Value Bet Recommendations:")
+    outcomes = {
+        "Home Win": home_win_odds,
+        "Draw": draw_odds,
+        "Away Win": away_win_odds,
+        "Over 2.5": over_odds,
+        "Under 2.5": under_odds
+    }
+    
+    for outcome, odds in outcomes.items():
+        predicted_prob = score_probabilities.get(outcome, 0) * 100  # Get predicted probability from score probs
+        is_value_bet, margin = identify_value_bet(predicted_prob, odds)
+        if is_value_bet:
+            st.write(f"🔥 Value Bet: {outcome} - Margin: {margin:.2f}% (Odds: {odds})")
+        else:
+            st.write(f"{outcome}: Not a Value Bet (Margin: {margin:.2f}%)")

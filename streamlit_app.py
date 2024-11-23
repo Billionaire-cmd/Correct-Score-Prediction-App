@@ -1,6 +1,7 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 from math import factorial
 from scipy.stats import poisson
 
@@ -14,7 +15,7 @@ Predict football match outcomes using advanced metrics like:
 - **Margin Calculations**
 - **Straight Home, Draw, and Away Win**
 - **Correct Score**
-- **Halftime/Full-time (HT/FT)**
+- **Halftime/Full-time (HT/FT)℅**
 """)
 
 # Sidebar Input Section
@@ -41,12 +42,38 @@ away_win_odds = st.sidebar.number_input("Odds: Away Win", value=3.10, step=0.01)
 over_odds = st.sidebar.number_input("Over 2.5 Odds", value=2.40, step=0.01)
 under_odds = st.sidebar.number_input("Under 2.5 Odds", value=1.55, step=0.01)
 
-# Submit Prediction Button
-submit = st.sidebar.button("Submit Prediction")
+# Margin Targets
+st.sidebar.subheader("Margin Targets")
+margin_targets = {
+    "Match Results": st.sidebar.number_input("Match Results Margin", value=4.95, step=0.01),
+    "Asian Handicap": st.sidebar.number_input("Asian Handicap Margin", value=5.90, step=0.01),
+    "Over/Under": st.sidebar.number_input("Over/Under Margin", value=6.18, step=0.01),
+    "Exact Goals": st.sidebar.number_input("Exact Goals Margin", value=20.0, step=0.01),
+    "Correct Score": st.sidebar.number_input("Correct Score Margin", value=57.97, step=0.01),
+    "HT/FT": st.sidebar.number_input("HT/FT Margin", value=20.0, step=0.01),
+}
 
-# Prediction Calculations
-if submit:
+# Select Prediction Points
+selected_points = st.sidebar.multiselect(
+    "Select Points for Probabilities and Odds",
+    options=[
+        "Home Win", "Draw", "Away Win",
+        "Over 2.5", "Under 2.5",
+        "Correct Score", "HT/FT",
+        "BTTS", "Exact Goals"
+    ]
+)
+
+# Submit Prediction Button
+if st.sidebar.button("Submit Prediction"):
+    # Display Selected Points
+    st.subheader("Selected Points for Prediction")
+    st.write(selected_points)
+
     # Functions for Calculations
+    def calculate_margin_difference(odds, margin_target):
+        return round(margin_target - odds, 2)
+
     def poisson_prob(mean, goal):
         return (np.exp(-mean) * mean**goal) / factorial(goal)
 
@@ -66,6 +93,40 @@ if submit:
         total = home + draw + away
         return home / total, draw / total, away / total
 
+    # Mock Probability Functions
+    def calculate_ht_ft_probabilities():
+        data = {
+            "Half Time / Full Time": ["1/1", "1/X", "1/2", "X/1", "X/X", "X/2", "2/1", "2/X", "2/2"],
+            "Probabilities (%)": [26.0, 4.8, 1.6, 16.4, 17.4, 11.2, 2.2, 4.8, 15.5]
+        }
+        return pd.DataFrame(data)
+
+    def calculate_correct_score_probabilities():
+        data = {
+            "Score": [
+                "1:0", "2:0", "2:1", "3:0", "3:1", "3:2", "4:0", "4:1", "5:0",
+                "0:0", "1:1", "2:2", "3:3", "4:4", "5:5", "Other",
+                "0:1", "0:2", "1:2", "0:3", "1:3", "2:3", "0:4", "1:4", "0:5"
+            ],
+            "Probabilities (%)": [
+                12.4, 8.5, 8.8, 3.9, 4.0, 2.1, 1.3, 1.4, 0.4,
+                9.0, 12.8, 4.6, 0.7, 0.1, None, 2.9,
+                9.3, 4.8, 6.6, 1.7, 2.3, 1.6, 0.4, 0.6, 0.1
+            ]
+        }
+        return pd.DataFrame(data)
+
+    # Display Predictions
+    if "HT/FT" in selected_points:
+        st.write("### Half Time / Full Time - Probabilities (%)")
+        ht_ft_probs = calculate_ht_ft_probabilities()
+        st.table(ht_ft_probs)
+
+    if "Correct Score" in selected_points:
+        st.write("### Correct Score - Probabilities (%)")
+        correct_score_probs = calculate_correct_score_probabilities()
+        st.table(correct_score_probs)
+
     # Attack/Defense Strengths and Expected Goals
     home_attack_strength = avg_home_goals_scored / league_avg_goals_scored
     home_defense_strength = avg_home_goals_conceded / league_avg_goals_conceded
@@ -75,13 +136,6 @@ if submit:
     home_expected_goals = home_attack_strength * away_defense_strength * league_avg_goals_scored
     away_expected_goals = away_attack_strength * home_defense_strength * league_avg_goals_scored
 
-    # Probabilities
-    home_prob = odds_implied_probability(home_win_odds)
-    draw_prob = odds_implied_probability(draw_odds)
-    away_prob = odds_implied_probability(away_win_odds)
-    norm_home, norm_draw, norm_away = normalize_probs(home_prob, draw_prob, away_prob)
-
-    # Display Results
     st.subheader("Calculated Strengths")
     st.write(f"**Home Attack Strength:** {home_attack_strength:.2f}")
     st.write(f"**Home Defense Strength:** {home_defense_strength:.2f}")
@@ -92,23 +146,15 @@ if submit:
     st.write(f"**Home Expected Goals:** {home_expected_goals:.2f}")
     st.write(f"**Away Expected Goals:** {away_expected_goals:.2f}")
 
+    # Expected Probabilities
+    home_prob = odds_implied_probability(home_win_odds)
+    draw_prob = odds_implied_probability(draw_odds)
+    away_prob = odds_implied_probability(away_win_odds)
+    norm_home, norm_draw, norm_away = normalize_probs(home_prob, draw_prob, away_prob)
+
     st.subheader("Expected Probabilities")
     st.write(f"**Normalized Home Win Probability:** {norm_home:.2%}")
     st.write(f"**Normalized Draw Probability:** {norm_draw:.2%}")
     st.write(f"**Normalized Away Win Probability:** {norm_away:.2%}")
-
-    # Correct Score Prediction
-    st.subheader("Correct Score Probabilities")
-    scores = calculate_probabilities(home_expected_goals, away_expected_goals)
-    score_df = pd.DataFrame(scores, columns=["Home Goals", "Away Goals", "Probability"])
-    score_df["Probability (%)"] = score_df["Probability"] * 100
-    st.dataframe(score_df.sort_values(by="Probability", ascending=False).head(10))
-
-    # HT/FT Prediction
-    st.subheader("HT/FT Probabilities (Mock)")
-    ht_ft_data = {
-        "Half Time / Full Time": ["1/1", "1/X", "1/2", "X/1", "X/X", "X/2", "2/1", "2/X", "2/2"],
-        "Probability (%)": [26.0, 4.8, 1.6, 16.4, 17.4, 11.2, 2.2, 4.8, 15.5]
-    }
-    ht_ft_df = pd.DataFrame(ht_ft_data)
-    st.table(ht_ft_df)
+else:
+    st.warning("Press 'Submit Prediction' to calculate results.")

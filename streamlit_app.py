@@ -116,12 +116,6 @@ if submit_button:
     if best_correct_score:
         st.write(f"\n💡 **Best Correct Score Bet:** {best_correct_score} with margin {best_margin:.2f}%")
 
-    # Recommendation for best overall bet
+    # Recommendation for best overall bet based on best correct score bet
     st.write("\n**Recommended Best Bet:**")
-    best_bet = max(
-        [("Home Win", home_win_prob, home_win_margin, home_win_odds),
-         ("Draw", draw_prob, draw_margin, draw_odds),
-         ("Away Win", away_win_prob, away_win_margin, away_win_odds)],
-        key=lambda x: x[2]  # Maximize value margin
-    )
-    st.write(f"💡 **Recommended Bet:** {best_bet[0]} with margin {best_bet[2]:.2f}% (Odds: {best_bet[3]})")
+    st.write(f"💡 **Recommended Bet:** Best Correct Score: {best_correct_score} with margin {best_margin:.2f}%")

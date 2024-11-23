@@ -64,68 +64,56 @@ selected_points = st.sidebar.multiselect(
     ]
 )
 
+# Functions for Calculations
+def calculate_margin_difference(odds, margin_target):
+    return round(margin_target - odds, 2)
+
+def poisson_prob(mean, goal):
+    return (np.exp(-mean) * mean**goal) / factorial(goal)
+
+def calculate_probabilities(home_mean, away_mean, max_goals=5):
+    home_probs = [poisson_prob(home_mean, g) for g in range(max_goals + 1)]
+    away_probs = [poisson_prob(away_mean, g) for g in range(max_goals + 1)]
+    return [
+        (i, j, home_probs[i] * away_probs[j])
+        for i in range(max_goals + 1)
+        for j in range(max_goals + 1)
+    ]
+
+def odds_implied_probability(odds):
+    return 1 / odds
+
+def normalize_probs(home, draw, away):
+    total = home + draw + away
+    return home / total, draw / total, away / total
+
+# Helper Functions
+def calculate_ht_ft_probabilities():
+    data = {
+        "Half Time / Full Time": ["1/1", "1/X", "1/2", "X/1", "X/X", "X/2", "2/1", "2/X", "2/2"],
+        "Probabilities (%)": [26.0, 4.8, 1.6, 16.4, 17.4, 11.2, 2.2, 4.8, 15.5]
+    }
+    return pd.DataFrame(data)
+
+def calculate_correct_score_probabilities():
+    data = {
+        "Score": [
+            "1:0", "2:0", "2:1", "3:0", "3:1", "3:2", "4:0", "4:1", "5:0",
+            "0:0", "1:1", "2:2", "3:3", "4:4", "5:5", "Other",
+            "0:1", "0:2", "1:2", "0:3", "1:3", "2:3", "0:4", "1:4", "0:5"
+        ],
+        "Probabilities (%)": [
+            12.4, 8.5, 8.8, 3.9, 4.0, 2.1, 1.3, 1.4, 0.4,
+            9.0, 12.8, 4.6, 0.7, 0.1, None, 2.9,
+            9.3, 4.8, 6.6, 1.7, 2.3, 1.6, 0.4, 0.6, 0.1
+        ]
+    }
+    return pd.DataFrame(data)
+
 # Submit Prediction Button
 if st.sidebar.button("Submit Prediction"):
-    # Display Selected Points
     st.subheader("Selected Points for Prediction")
     st.write(selected_points)
-
-    # Functions for Calculations
-    def calculate_margin_difference(odds, margin_target):
-        return round(margin_target - odds, 2)
-
-    def poisson_prob(mean, goal):
-        return (np.exp(-mean) * mean**goal) / factorial(goal)
-
-    def calculate_probabilities(home_mean, away_mean, max_goals=5):
-        home_probs = [poisson_prob(home_mean, g) for g in range(max_goals + 1)]
-        away_probs = [poisson_prob(away_mean, g) for g in range(max_goals + 1)]
-        return [
-            (i, j, home_probs[i] * away_probs[j])
-            for i in range(max_goals + 1)
-            for j in range(max_goals + 1)
-        ]
-
-    def odds_implied_probability(odds):
-        return 1 / odds
-
-    def normalize_probs(home, draw, away):
-        total = home + draw + away
-        return home / total, draw / total, away / total
-
-    # Mock Probability Functions
-    def calculate_ht_ft_probabilities():
-        data = {
-            "Half Time / Full Time": ["1/1", "1/X", "1/2", "X/1", "X/X", "X/2", "2/1", "2/X", "2/2"],
-            "Probabilities (%)": [26.0, 4.8, 1.6, 16.4, 17.4, 11.2, 2.2, 4.8, 15.5]
-        }
-        return pd.DataFrame(data)
-
-    def calculate_correct_score_probabilities():
-        data = {
-            "Score": [
-                "1:0", "2:0", "2:1", "3:0", "3:1", "3:2", "4:0", "4:1", "5:0",
-                "0:0", "1:1", "2:2", "3:3", "4:4", "5:5", "Other",
-                "0:1", "0:2", "1:2", "0:3", "1:3", "2:3", "0:4", "1:4", "0:5"
-            ],
-            "Probabilities (%)": [
-                12.4, 8.5, 8.8, 3.9, 4.0, 2.1, 1.3, 1.4, 0.4,
-                9.0, 12.8, 4.6, 0.7, 0.1, None, 2.9,
-                9.3, 4.8, 6.6, 1.7, 2.3, 1.6, 0.4, 0.6, 0.1
-            ]
-        }
-        return pd.DataFrame(data)
-
-    # Display Predictions
-    if "HT/FT" in selected_points:
-        st.write("### Half Time / Full Time - Probabilities (%)")
-        ht_ft_probs = calculate_ht_ft_probabilities()
-        st.table(ht_ft_probs)
-
-    if "Correct Score" in selected_points:
-        st.write("### Correct Score - Probabilities (%)")
-        correct_score_probs = calculate_correct_score_probabilities()
-        st.table(correct_score_probs)
 
     # Attack/Defense Strengths and Expected Goals
     home_attack_strength = avg_home_goals_scored / league_avg_goals_scored
@@ -156,5 +144,22 @@ if st.sidebar.button("Submit Prediction"):
     st.write(f"**Normalized Home Win Probability:** {norm_home:.2%}")
     st.write(f"**Normalized Draw Probability:** {norm_draw:.2%}")
     st.write(f"**Normalized Away Win Probability:** {norm_away:.2%}")
-else:
-    st.warning("Press 'Submit Prediction' to calculate results.")
+
+    if "HT/FT" in selected_points:
+        st.write("### Half Time / Full Time - Probabilities (%)")
+        ht_ft_probs = calculate_ht_ft_probabilities()
+        st.table(ht_ft_probs)
+
+    if "Correct Score" in selected_points:
+        st.write("### Correct Score - Probabilities (%)")
+        correct_score_probs = calculate_correct_score_probabilities()
+        st.table(correct_score_probs)
+
+    # Margin Differences
+    st.subheader("Margin Differences")
+    margin_differences = {
+        "Home Win": calculate_margin_difference(home_win_odds, margin_targets["Match Results"]),
+        "Draw": calculate_margin_difference(draw_odds, margin_targets["Match Results"]),
+        "Away Win": calculate_margin_difference(away_win_odds, margin_targets["Match Results"]),
+    }
+    st.write(margin_differences)

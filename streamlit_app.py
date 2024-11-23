@@ -50,17 +50,13 @@ def poisson_prob(mean, goal):
     """Calculate Poisson probability for a given mean and goal count."""
     return (np.exp(-mean) * mean**goal) / factorial(goal)
 
-def calculate_poisson_matrix(home_goals, away_goals):
+def calculate_poisson_matrix(home_expected_goals, away_expected_goals, max_goals=5):
     """Generate a matrix of probabilities for each scoreline."""
-    matrix = np.zeros((home_goals + 1, away_goals + 1))
-    for i in range(home_goals + 1):
-        for j in range(away_goals + 1):
+    matrix = np.zeros((max_goals + 1, max_goals + 1))
+    for i in range(max_goals + 1):
+        for j in range(max_goals + 1):
             matrix[i, j] = poisson_prob(home_expected_goals, i) * poisson_prob(away_expected_goals, j)
     return matrix
-
-def calculate_margins(odds, target_margin):
-    """Calculate margin difference between odds and target."""
-    return round(target_margin - odds, 2)
 
 # Expected Goals Calculation
 home_attack_strength = avg_home_goals_scored / league_avg_goals
@@ -98,7 +94,7 @@ st.write(f"**Away Win:** {normalized_away_prob:.2%}")
 if show_correct_score:
     st.subheader("Correct Score Probabilities")
     max_goals = 5
-    score_matrix = calculate_poisson_matrix(max_goals, max_goals)
+    score_matrix = calculate_poisson_matrix(home_expected_goals, away_expected_goals, max_goals)
 
     correct_scores = []
     for i in range(max_goals + 1):
@@ -114,7 +110,7 @@ if show_correct_score:
 if show_heatmap:
     st.subheader("Poisson Probability Heatmap")
     max_goals = 5
-    score_matrix = calculate_poisson_matrix(max_goals, max_goals)
+    score_matrix = calculate_poisson_matrix(home_expected_goals, away_expected_goals, max_goals)
 
     fig, ax = plt.subplots()
     cax = ax.matshow(score_matrix, cmap="Blues")
@@ -127,43 +123,3 @@ if show_heatmap:
     plt.ylabel("Home Goals")
     plt.title("Poisson Distribution Heatmap")
     st.pyplot(fig)
-
-# Football Prediction Model Class
-class FootballPredictionModel:
-    def calculate_ht_ft_probabilities(self):
-        data = {
-            "Half Time / Full Time": ["1/1", "1/X", "1/2", "X/1", "X/X", "X/2", "2/1", "2/X", "2/2"],
-            "Probabilities (%)": [26.0, 4.8, 1.6, 16.4, 17.4, 11.2, 2.2, 4.8, 15.5]
-        }
-        return pd.DataFrame(data)
-
-    def calculate_correct_score_probabilities(self):
-        data = {
-            "Score": [
-                "1:0", "2:0", "2:1", "3:0", "3:1", "3:2", "4:0", "4:1", "5:0",
-                "0:0", "1:1", "2:2", "3:3", "4:4", "5:5", "Other",
-                "0:1", "0:2", "1:2", "0:3", "1:3", "2:3", "0:4", "1:4", "0:5"
-            ],
-            "Probabilities (%)": [
-                12.4, 8.5, 8.8, 3.9, 4.0, 2.1, 1.3, 1.4, 0.4,
-                9.0, 12.8, 4.6, 0.7, 0.1, None, 2.9,
-                9.3, 4.8, 6.6, 1.7, 2.3, 1.6, 0.4, 0.6, 0.1
-            ]
-        }
-        return pd.DataFrame(data)
-
-# Instantiate the class
-model = FootballPredictionModel()
-
-# Get the HT/FT probabilities
-ht_ft_df = model.calculate_ht_ft_probabilities()
-
-# Get the correct score probabilities
-correct_score_df = model.calculate_correct_score_probabilities()
-
-# Display the results
-st.subheader("HT/FT Probabilities")
-st.dataframe(ht_ft_df)
-
-st.subheader("Correct Score Probabilities")
-st.dataframe(correct_score_df)

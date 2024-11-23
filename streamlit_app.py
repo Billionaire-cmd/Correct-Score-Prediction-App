@@ -96,41 +96,30 @@ if show_correct_score:
     max_goals = 5
     score_matrix = calculate_poisson_matrix(home_expected_goals, away_expected_goals, max_goals)
 
-    # Convert the score matrix to a DataFrame
-    score_df = pd.DataFrame(score_matrix, columns=[f"Away {i}" for i in range(max_goals + 1)],
-                            index=[f"Home {i}" for i in range(max_goals + 1)])
-    
-    st.write(score_df)
+    correct_scores = []
+    for i in range(max_goals + 1):
+        for j in range(max_goals + 1):
+            correct_scores.append({
+                "Score": f"{i}-{j}",
+                "Probability (%)": score_matrix[i, j] * 100
+            })
+    score_df = pd.DataFrame(correct_scores).sort_values(by="Probability (%)", ascending=False)
+    st.dataframe(score_df.head(10))
 
-    # Visualization: Correct Score Heatmap
-    fig, ax = plt.subplots(figsize=(8, 6))
-    cax = ax.matshow(score_matrix, cmap="coolwarm")
-    fig.colorbar(cax)
-    ax.set_xticks(np.arange(max_goals + 1))
-    ax.set_yticks(np.arange(max_goals + 1))
-    ax.set_xticklabels(np.arange(max_goals + 1))
-    ax.set_yticklabels(np.arange(max_goals + 1))
-    ax.set_xlabel("Away Goals")
-    ax.set_ylabel("Home Goals")
-    ax.set_title("Correct Score Probabilities Heatmap")
-    st.pyplot(fig)
-
-# Poisson Heatmap
+# Visualization: Heatmap
 if show_heatmap:
     st.subheader("Poisson Probability Heatmap")
-    prob_matrix = np.zeros((5 + 1, 5 + 1))
-    for i in range(5 + 1):
-        for j in range(5 + 1):
-            prob_matrix[i, j] = poisson.pmf(i, home_expected_goals) * poisson.pmf(j, away_expected_goals)
-    prob_matrix /= prob_matrix.sum()
+    max_goals = 5
+    score_matrix = calculate_poisson_matrix(home_expected_goals, away_expected_goals, max_goals)
 
-    fig, ax = plt.subplots(figsize=(8, 6))
-    cax = ax.matshow(prob_matrix, cmap="coolwarm")
-    fig.colorbar(cax)
-    ax.set_xticks(range(5 + 1))
-    ax.set_yticks(range(5 + 1))
-    ax.set_xticklabels(range(5 + 1))
-    ax.set_yticklabels(range(5 + 1))
-    ax.set_xlabel("Away Goals")
-    ax.set_ylabel("Home Goals")
+    fig, ax = plt.subplots()
+    cax = ax.matshow(score_matrix, cmap="Blues")
+    plt.colorbar(cax)
+    ax.set_xticks(range(max_goals + 1))
+    ax.set_yticks(range(max_goals + 1))
+    ax.set_xticklabels(range(max_goals + 1))
+    ax.set_yticklabels(range(max_goals + 1))
+    plt.xlabel("Away Goals")
+    plt.ylabel("Home Goals")
+    plt.title("Poisson Distribution Heatmap")
     st.pyplot(fig)

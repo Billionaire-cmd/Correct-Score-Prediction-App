@@ -5,7 +5,7 @@ from scipy.stats import poisson
 import streamlit as st
 
 # Streamlit Application Title
-st.title("🤖🤖 Advanced Rabiotic Football Outcome Predictor")
+st.title("💯💯🤖 Advanced Rabiotic Football Outcome Predictor")
 st.markdown("""
 Predict football match outcomes using advanced metrics like:
 - **Poisson Distribution**

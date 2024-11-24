@@ -29,12 +29,18 @@ draw_odds = st.sidebar.number_input("Odds: Draw", value=3.20, step=0.01)
 away_win_odds = st.sidebar.number_input("Odds: Away Win", value=3.10, step=0.01)
 
 # Correct Score Odds Input
-st.sidebar.write("Correct Score Odds")
+st.sidebar.write("Correct Score Odds (Max 4:4)")
 correct_score_odds = {}
-for home_goals in range(6):  # Extend range to allow max 5:5
-    for away_goals in range(6):
+for home_goals in range(5):  # Max 4 goals for home
+    for away_goals in range(5):  # Max 4 goals for away
         key = f"{home_goals}:{away_goals}"
         correct_score_odds[key] = st.sidebar.number_input(f"Odds for {key}", value=10.0, step=0.01)
+
+# Additional Odds Input
+st.sidebar.write("Additional Odds")
+over_under_odds = st.sidebar.number_input("Odds: Over 2.5 Goals", value=1.80, step=0.01)
+both_teams_to_score_odds = st.sidebar.number_input("Odds: Both Teams to Score", value=1.70, step=0.01)
+double_chance_odds = st.sidebar.number_input("Odds: Double Chance (Home/Draw)", value=1.40, step=0.01)
 
 # Submit Button
 submit_button = st.sidebar.button("Submit Prediction")
@@ -44,7 +50,7 @@ def poisson_prob(mean, goal):
     """Poisson probability mass function for calculating probabilities."""
     return (np.exp(-mean) * mean**goal) / factorial(goal)
 
-def calculate_match_probabilities(home_mean, away_mean, max_goals=5):
+def calculate_match_probabilities(home_mean, away_mean, max_goals=4):
     """Calculate match probabilities for Home Win, Draw, Away Win."""
     home_probs = [poisson_prob(home_mean, g) for g in range(max_goals + 1)]
     away_probs = [poisson_prob(away_mean, g) for g in range(max_goals + 1)]
@@ -60,7 +66,7 @@ def calculate_match_probabilities(home_mean, away_mean, max_goals=5):
 
     return home_win_prob, draw_prob, away_win_prob
 
-def calculate_correct_score_probs(home_mean, away_mean, max_goals=5):
+def calculate_correct_score_probs(home_mean, away_mean, max_goals=4):
     """Calculate probabilities for each possible correct score."""
     correct_score_probs = {}
     for home_goals in range(max_goals + 1):
@@ -85,12 +91,11 @@ if submit_button:
     st.write(f"**Draw Probability:** {draw_prob * 100:.2f}%")
     st.write(f"**Away Win Probability:** {away_win_prob * 100:.2f}%")
 
-    # Calculate value margins
+    # Value margins for match outcomes
     home_win_margin = calculate_margin_difference(home_win_prob, home_win_odds)
     draw_margin = calculate_margin_difference(draw_prob, draw_odds)
     away_win_margin = calculate_margin_difference(away_win_prob, away_win_odds)
 
-    # Identify value bets
     st.write("\n**Value Bet Analysis:**")
     if home_win_margin > 5.0:
         st.write(f"🔥 **Home Win is a Value Bet!** Margin: {home_win_margin:.2f}%")
@@ -116,6 +121,8 @@ if submit_button:
     if best_correct_score:
         st.write(f"\n💡 **Best Correct Score Bet:** {best_correct_score} with margin {best_margin:.2f}%")
 
-    # Recommendation for best overall bet based on best correct score bet
-    st.write("\n**Recommended Best Bet:**")
-    st.write(f"💡 **Recommended Bet:** Best Correct Score: {best_correct_score} with margin {best_margin:.2f}%")
+    # Additional Odds Analysis (example for Over/Under Goals)
+    st.write("\n**Additional Odds Analysis:**")
+    st.write(f"Odds for Over 2.5 Goals: {over_under_odds}")
+    st.write(f"Odds for Both Teams to Score: {both_teams_to_score_odds}")
+    st.write(f"Odds for Double Chance (Home/Draw): {double_chance_odds}")

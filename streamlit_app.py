@@ -31,7 +31,7 @@ away_win_odds = st.sidebar.number_input("Odds: Away Win", value=3.10, step=0.01)
 # Correct Score Odds Input
 st.sidebar.write("Correct Score Odds")
 correct_score_odds = {}
-for home_goals in range(6):  # Extend range to allow max 4:4
+for home_goals in range(6):  # Extend range to allow max 5:5
     for away_goals in range(6):
         key = f"{home_goals}:{away_goals}"
         correct_score_odds[key] = st.sidebar.number_input(f"Odds for {key}", value=10.0, step=0.01)

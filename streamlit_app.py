@@ -99,11 +99,11 @@ if submit_button:
     away_win_margin = calculate_margin_difference(away_win_prob, away_win_odds)
 
     st.write("\n**Value Bet Analysis:**")
-    if home_win_margin > 2.0:
+    if home_win_margin > 5.0:
         st.write(f"🔥 **Home Win is a Value Bet!** Margin: {home_win_margin:.2f}%")
-    if draw_margin > 2.0:
+    if draw_margin > 5.0:
         st.write(f"🔥 **Draw is a Value Bet!** Margin: {draw_margin:.2f}%")
-    if away_win_margin > 2.0:
+    if away_win_margin > 5.0:
         st.write(f"🔥 **Away Win is a Value Bet!** Margin: {away_win_margin:.2f}%")
 
     # Correct Score Probabilities
@@ -116,9 +116,11 @@ if submit_button:
         if score in correct_score_odds:
             margin = calculate_margin_difference(prob, correct_score_odds[score])
             st.write(f"Score {score}: {prob * 100:.2f}% | Margin: {margin:.2f}%")
-            if margin > best_margin:
-                best_margin = margin
-                best_correct_score = score
+            # Filter for 1:1 and 2:1 and prefer those scores based on margin range
+            if (score == "1:1" or score == "2:1") and 2 <= margin <= 5:
+                if margin > best_margin:
+                    best_margin = margin
+                    best_correct_score = score
 
     if best_correct_score:
         st.write(f"\n💡 **Best Correct Score Bet:** {best_correct_score} with margin {best_margin:.2f}%")

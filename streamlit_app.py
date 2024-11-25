@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 from math import factorial
 from scipy.stats import poisson
 import streamlit as st
@@ -20,13 +19,13 @@ st.sidebar.header("Input Parameters")
 # Match and Odds Input
 home_team = st.sidebar.text_input("Home Team", "Team A")
 away_team = st.sidebar.text_input("Away Team", "Team B")
-goals_home_mean = st.sidebar.number_input("Expected Goals (Home)", min_value=0.1, value=1.2, step=0.1)
-goals_away_mean = st.sidebar.number_input("Expected Goals (Away)", min_value=0.1, value=1.1, step=0.1)
+goals_home_mean = st.sidebar.number_input("Expected Goals (Home)", min_value=0.1, value=1.21, step=0.01)
+goals_away_mean = st.sidebar.number_input("Expected Goals (Away)", min_value=0.1, value=1.64, step=0.01)
 
 # Odds Input
-home_win_odds = st.sidebar.number_input("Odds: Home Win", value=2.50, step=0.01)
-draw_odds = st.sidebar.number_input("Odds: Draw", value=3.20, step=0.01)
-away_win_odds = st.sidebar.number_input("Odds: Away Win", value=3.10, step=0.01)
+home_win_odds = st.sidebar.number_input("Odds: Home Win", value=1.50, step=0.01)
+draw_odds = st.sidebar.number_input("Odds: Draw", value=4.00, step=0.01)
+away_win_odds = st.sidebar.number_input("Odds: Away Win", value=7.00, step=0.01)
 
 # Correct Score Odds Input
 st.sidebar.write("Correct Score Odds (Max 4:4)")
@@ -38,9 +37,9 @@ for home_goals in range(5):  # Max 4 goals for home
 
 # Additional Odds Input
 st.sidebar.write("Additional Odds")
-over_under_odds = st.sidebar.number_input("Odds: Over 2.5 Goals", value=1.80, step=0.01)
-both_teams_to_score_odds = st.sidebar.number_input("Odds: Both Teams to Score", value=1.70, step=0.01)
-double_chance_odds = st.sidebar.number_input("Odds: Double Chance (Home/Draw)", value=1.40, step=0.01)
+over_under_odds = st.sidebar.number_input("Odds: Over 2.5 Goals", value=2.15, step=0.01)
+both_teams_to_score_odds = st.sidebar.number_input("Odds: Both Teams to Score", value=1.69, step=0.01)
+double_chance_odds = st.sidebar.number_input("Odds: Double Chance (Home/Draw)", value=1.11, step=0.01)
 
 # Submit Button
 submit_button = st.sidebar.button("Submit Prediction")
@@ -83,6 +82,9 @@ def calculate_margin_difference(pred_prob, odds):
 
 # Main prediction logic
 if submit_button:
+    # Display teams
+    st.write(f"**Match:** {home_team} vs {away_team}")
+    
     # Calculate match probabilities (Home Win, Draw, Away Win)
     home_win_prob, draw_prob, away_win_prob = calculate_match_probabilities(goals_home_mean, goals_away_mean)
     
@@ -121,7 +123,7 @@ if submit_button:
     if best_correct_score:
         st.write(f"\n💡 **Best Correct Score Bet:** {best_correct_score} with margin {best_margin:.2f}%")
 
-    # Additional Odds Analysis (example for Over/Under Goals)
+    # Additional Odds Analysis
     st.write("\n**Additional Odds Analysis:**")
     st.write(f"Odds for Over 2.5 Goals: {over_under_odds}")
     st.write(f"Odds for Both Teams to Score: {both_teams_to_score_odds}")

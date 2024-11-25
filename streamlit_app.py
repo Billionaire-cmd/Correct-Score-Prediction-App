@@ -111,20 +111,20 @@ if submit_button:
     correct_score_probs = calculate_correct_score_probs(goals_home_mean, goals_away_mean)
     best_correct_score = None
     best_margin = -float("inf")
+    recommended_score = "2:1"
 
     for score, prob in correct_score_probs.items():
         if score in correct_score_odds:
             margin = calculate_margin_difference(prob, correct_score_odds[score])
             st.write(f"Score {score}: {prob * 100:.2f}% | Margin: {margin:.2f}%")
-            # Filter for 1:1 and 2:1 and prefer those scores based on margin range
-            if (score == "1:1" or score == "2:1") and 2 <= margin <= 5:
-                if margin > best_margin:
-                    best_margin = margin
-                    best_correct_score = score
+            if score == recommended_score and margin > 2.0 and margin < 6.0:  # Favoring Home Win 2-1
+                st.write(f"💡 **Best Correct Score Bet:** {recommended_score} with margin {margin:.2f}%")
 
-    if best_correct_score:
-        st.write(f"\n💡 **Best Correct Score Bet:** {best_correct_score} with margin {best_margin:.2f}%")
-
+    # Final recommendation
+    st.write(f"\n**Final Recommendation:**")
+    if home_win_margin > 2.0 and home_win_margin < 6.0:
+        st.write(f"💡 **Final Bet:** Home Win is a Value Bet with Margin between 2% and 6%. Recommended Correct Score: **{recommended_score}**")
+    
     # Additional Odds Analysis
     st.write("\n**Additional Odds Analysis:**")
     st.write(f"Odds for Over 2.5 Goals: {over_under_odds}")

@@ -29,14 +29,35 @@ away_win_odds = st.sidebar.number_input("Odds: Away Win", value=7.00, step=0.01)
 
 # Correct Score Odds Input
 st.sidebar.write("Correct Score Odds (Max 4:4)")
-correct_score_odds = {}
-for home_goals in range(5):  # Max 4 goals for home
-    for away_goals in range(5):  # Max 4 goals for away
-        key = f"{home_goals}:{away_goals}"
-        correct_score_odds[key] = st.sidebar.number_input(f"Odds for {key}", value=10.0, step=0.01)
+correct_score_odds = {
+    "0:0": st.sidebar.number_input("Odds for 0:0", value=9.10, step=0.01),
+    "0:1": st.sidebar.number_input("Odds for 0:1", value=14.50, step=0.01),
+    "0:2": st.sidebar.number_input("Odds for 0:2", value=44.00, step=0.01),
+    "0:3": st.sidebar.number_input("Odds for 0:3", value=210.00, step=0.01),
+    "0:4": st.sidebar.number_input("Odds for 0:4", value=250.00, step=0.01),
+    "1:0": st.sidebar.number_input("Odds for 1:0", value=5.30, step=0.01),
+    "1:1": st.sidebar.number_input("Odds for 1:1", value=7.80, step=0.01),
+    "1:2": st.sidebar.number_input("Odds for 1:2", value=25.00, step=0.01),
+    "1:3": st.sidebar.number_input("Odds for 1:3", value=115.00, step=0.01),
+    "1:4": st.sidebar.number_input("Odds for 1:4", value=250.00, step=0.01),
+    "2:0": st.sidebar.number_input("Odds for 2:0", value=5.80, step=0.01),
+    "2:1": st.sidebar.number_input("Odds for 2:1", value=8.90, step=0.01),
+    "2:2": st.sidebar.number_input("Odds for 2:2", value=26.00, step=0.01),
+    "2:3": st.sidebar.number_input("Odds for 2:3", value=125.00, step=0.01),
+    "2:4": st.sidebar.number_input("Odds for 2:4", value=250.00, step=0.01),
+    "3:0": st.sidebar.number_input("Odds for 3:0", value=9.50, step=0.01),
+    "3:1": st.sidebar.number_input("Odds for 3:1", value=14.50, step=0.01),
+    "3:2": st.sidebar.number_input("Odds for 3:2", value=45.00, step=0.01),
+    "3:3": st.sidebar.number_input("Odds for 3:3", value=200.00, step=0.01),
+    "3:4": st.sidebar.number_input("Odds for 3:4", value=250.00, step=0.01),
+    "4:0": st.sidebar.number_input("Odds for 4:0", value=21.00, step=0.01),
+    "4:1": st.sidebar.number_input("Odds for 4:1", value=32.00, step=0.01),
+    "4:2": st.sidebar.number_input("Odds for 4:2", value=8.90, step=0.01),
+    "4:3": st.sidebar.number_input("Odds for 4:3", value=250.00, step=0.01),
+    "4:4": st.sidebar.number_input("Odds for 4:4", value=250.00, step=0.01)
+}
 
 # Additional Odds Input
-st.sidebar.write("Additional Odds")
 over_under_odds = st.sidebar.number_input("Odds: Over 2.5 Goals", value=2.15, step=0.01)
 both_teams_to_score_odds = st.sidebar.number_input("Odds: Both Teams to Score", value=1.69, step=0.01)
 double_chance_odds = st.sidebar.number_input("Odds: Double Chance (Home/Draw)", value=1.11, step=0.01)
@@ -109,28 +130,13 @@ if submit_button:
     # Correct Score Probabilities
     st.write("\n**Correct Score Probabilities:**")
     correct_score_probs = calculate_correct_score_probs(goals_home_mean, goals_away_mean)
-    best_correct_score = None
+    best_correct_score = "2:1"
     best_margin = -float("inf")
-
+    
     for score, prob in correct_score_probs.items():
-        if score in correct_score_odds:
-            margin = calculate_margin_difference(prob, correct_score_odds[score])
-            st.write(f"Score {score}: {prob * 100:.2f}% | Margin: {margin:.2f}%")
-            if margin > best_margin:
-                best_margin = margin
-                best_correct_score = score
-
-    if best_correct_score:
-        st.write(f"\n💡 **Best Correct Score Bet:** {best_correct_score} with margin {best_margin:.2f}%")
-
-    # Final Recommendation Based on Margins
-    st.write("\n**Final Recommendation:**")
-    if home_win_margin >= 2.0 and home_win_margin <= 6.0:
-        st.write(f"🔥 **Home Win is a Value Bet!** Margin: {home_win_margin:.2f}%")
-        st.write(f"Recommended Correct Score: **2-1** in favor of Home Team")
-
-    # Additional Odds Analysis
-    st.write("\n**Additional Odds Analysis:**")
-    st.write(f"Odds for Over 2.5 Goals: {over_under_odds}")
-    st.write(f"Odds for Both Teams to Score: {both_teams_to_score_odds}")
-    st.write(f"Odds for Double Chance (Home/Draw): {double_chance_odds}")
+        score_margin = calculate_margin_difference(prob, correct_score_odds.get(score, 100))  # Default odds set as 100 if no odds available
+        st.write(f"Score: {score} - Probability: {prob * 100:.2f}% - Margin: {score_margin:.2f}%")
+        if score == "2:1" and score_margin > best_margin:
+            best_margin = score_margin
+    
+    st.write(f"\n**Best Recommended Score:** 2-1 with margin {best_margin:.2f}%")

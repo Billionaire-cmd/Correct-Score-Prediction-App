@@ -99,11 +99,11 @@ if submit_button:
     away_win_margin = calculate_margin_difference(away_win_prob, away_win_odds)
 
     st.write("\n**Value Bet Analysis:**")
-    if home_win_margin > 5.0:
+    if home_win_margin > 2.0:
         st.write(f"🔥 **Home Win is a Value Bet!** Margin: {home_win_margin:.2f}%")
-    if draw_margin > 5.0:
+    if draw_margin > 2.0:
         st.write(f"🔥 **Draw is a Value Bet!** Margin: {draw_margin:.2f}%")
-    if away_win_margin > 5.0:
+    if away_win_margin > 2.0:
         st.write(f"🔥 **Away Win is a Value Bet!** Margin: {away_win_margin:.2f}%")
 
     # Correct Score Probabilities

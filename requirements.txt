@@ -10,7 +10,8 @@ datetime
 scikit-learn
 tensorflow
 yfinance
-Dense,LSTM
+Dense
+LSTM
 Sequential
 train_test_split
 RandomForestRegressor

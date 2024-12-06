@@ -9,4 +9,4 @@ plotly
 requests 
 datetime
 scikit-learn
-tensorflow==2.9
+tensorflow

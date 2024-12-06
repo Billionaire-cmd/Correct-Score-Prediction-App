@@ -9,6 +9,59 @@ from sklearn.ensemble import RandomForestRegressor
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, LSTM
 
+# Sidebar for selecting trading pair and timeframe
+st.sidebar.header("Select Trading Pair and Timeframe")
+
+# List of trading pairs
+symbols = [
+    'GBPJPY=X',   # GBP/JPY
+    'USDJPY=X',   # USD/JPY
+    'XAUUSD=X',   # XAU/USD (Gold/USD)
+    'US30=X',     # US30 (Dow Jones Index)
+    'GBPUSD=X'    # GBP/USD
+]
+
+# Sidebar selection
+selected_symbol = st.sidebar.selectbox("Choose a trading pair", symbols)
+
+# Timeframe options in minutes
+timeframe_options = {
+    "1 Minute": "1m",
+    "5 Minutes": "5m",
+    "15 Minutes": "15m",
+    "30 Minutes": "30m",
+    "1 Hour": "1h",
+    "4 Hours": "4h"
+}
+
+# Sidebar selection for timeframe
+selected_timeframe = st.sidebar.selectbox("Choose a timeframe", list(timeframe_options.keys()))
+
+# Mapping the selected timeframe to the yfinance string format
+yf_timeframe = timeframe_options[selected_timeframe]
+
+# Function to fetch market data for the selected trading pair and timeframe
+def fetch_market_data(symbol, period="1d", interval="1m"):
+    data = yf.download(symbol, period=period, interval=interval)
+    return data
+
+# Fetch the data based on the selected symbol and timeframe
+market_data = fetch_market_data(selected_symbol, period="1d", interval=yf_timeframe)
+
+# Function to plot the closing prices
+def plot_closing_prices(data, symbol, timeframe):
+    plt.figure(figsize=(12, 6))
+    data['Close'].plot(label=f'{symbol} Close Price')
+    plt.title(f'{symbol} Closing Price - {timeframe} Interval')
+    plt.xlabel('Time')
+    plt.ylabel('Price (USD)')
+    plt.legend()
+    plt.grid(True)
+    st.pyplot(plt)  # Display the plot in Streamlit
+
+# Plot the closing prices for the selected trading pair and timeframe
+plot_closing_prices(market_data, selected_symbol, selected_timeframe)
+
 # Function to calculate RSI
 def calculate_rsi(data, period=14):
     delta = data.diff()
@@ -69,14 +122,11 @@ def create_lstm_model(data):
 # Streamlit UI
 st.title('Advanced Technical Analysis & Price Prediction')
 
-symbol = st.text_input('Enter stock symbol (e.g., AAPL, MSFT)', 'AAPL')
-start_date = st.date_input('Start Date', pd.to_datetime('2020-01-01'))
-
 # Fetch data and machine learning model predictions
-data, predictions = get_data(symbol, str(start_date))
+data, predictions = get_data(selected_symbol, "2020-01-01")
 
 # Display data and technical indicators
-st.write(f"### {symbol} Data and Technical Indicators")
+st.write(f"### {selected_symbol} Data and Technical Indicators")
 st.write(data.tail())
 
 # Plotting technical indicators and closing price
@@ -84,7 +134,7 @@ fig, ax = plt.subplots(figsize=(14, 7))
 ax.plot(data['Close'], label='Close Price', color='blue')
 ax.plot(data['SMA'], label='50-Day SMA', color='red')
 ax.plot(data['EMA'], label='50-Day EMA', color='green')
-ax.set_title(f"{symbol} - Price with Indicators")
+ax.set_title(f"{selected_symbol} - Price with Indicators")
 ax.set_xlabel("Date")
 ax.set_ylabel("Price")
 ax.legend()
@@ -94,7 +144,7 @@ st.pyplot(fig)
 fig2, ax2 = plt.subplots(figsize=(14, 7))
 ax2.plot(data.index[-len(predictions):], predictions, label='Predicted Price', color='orange')
 ax2.plot(data['Close'].tail(len(predictions)), label='Actual Price', color='blue')
-ax2.set_title(f"{symbol} - Price Prediction vs Actual")
+ax2.set_title(f"{selected_symbol} - Price Prediction vs Actual")
 ax2.set_xlabel("Date")
 ax2.set_ylabel("Price")
 ax2.legend()
@@ -109,7 +159,7 @@ if st.button('Train LSTM Model'):
     model.fit(data_for_lstm, data['Close'], epochs=5, batch_size=32)
     lstm_predictions = model.predict(data_for_lstm)
     
-    st.write(f"LSTM Model Prediction for {symbol}:")
+    st.write(f"LSTM Model Prediction for {selected_symbol}:")
     st.write(lstm_predictions[-1])
 
 # Displaying technical analysis insights based on RSI

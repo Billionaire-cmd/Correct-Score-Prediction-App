@@ -67,7 +67,7 @@ def create_lstm_model(data):
     return model
 
 # Streamlit UI
-st.title('Advanced Technical Analysis & Price Prediction')
+st.title('🤖🤖🤖 Rabiotic Advanced Technical Analysis & Price Prediction App')
 
 symbol = st.text_input('Enter stock symbol (e.g., AAPL, MSFT)', 'AAPL')
 start_date = st.date_input('Start Date', pd.to_datetime('2020-01-01'))

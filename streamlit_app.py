@@ -139,17 +139,17 @@ for i, prediction in enumerate(correct_score_predictions[:10]):
 
 # Recommendation: Provide a summary of the most probable predictions
 st.write(f"#### Top 5 Correct Score Predictions:")
-for i, prediction in enumerate(correct_score_predictions[:10]):
-    st.write(f"{i+1}. Scoreline: {prediction['Scoreline']} with Probability: {prediction['Probability']:.2f}%")
-
-st.write(f"#### Top 5 HT/FT Predictions:")
-for i, prediction in enumerate(ht_ft_predictions[:10]):
-    st.write(f"{i+1}. HT {prediction['HT']} - FT {prediction['FT']} with Probability: {prediction['Probability']:.2f}%")
-
-st.write(f"#### The Highest Correct Score Predictions:")
 for i, prediction in enumerate(correct_score_predictions[:5]):
     st.write(f"{i+1}. Scoreline: {prediction['Scoreline']} with Probability: {prediction['Probability']:.2f}%")
 
-st.write(f"#### The Highest HT/FT Predictions:")
+st.write(f"#### Top 5 HT/FT Predictions:")
 for i, prediction in enumerate(ht_ft_predictions[:5]):
+    st.write(f"{i+1}. HT {prediction['HT']} - FT {prediction['FT']} with Probability: {prediction['Probability']:.2f}%")
+
+st.write(f"#### The Highest Correct Score Predictions:")
+for i, prediction in enumerate(correct_score_predictions[:2]):
+    st.write(f"{i+1}. Scoreline: {prediction['Scoreline']} with Probability: {prediction['Probability']:.2f}%")
+
+st.write(f"#### The Highest HT/FT Predictions:")
+for i, prediction in enumerate(ht_ft_predictions[:2]):
     st.write(f"{i+1}. HT {prediction['HT']} - FT {prediction['FT']} with Probability: {prediction['Probability']:.2f}%")

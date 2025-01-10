@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.stats import poisson
 
 # Title of the app
-st.title("🤖Rabiotic HT/FT Correct score Predictor")
+st.title("🤖Rabiotic HT/FT Correct score Predictor 2")
 
 # Inputs for Team Statistics and Match Odds
 team_a = st.text_input("Enter Team A Name", value="Team A")
